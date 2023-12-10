@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unix File Permissions Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Unix File Permissions Converter</h2>
+
+  <label for="mode">Enter mode:</label>
+  <select id="mode">
+    <option value="s">Symbolic</option>
+    <option value="n">Numerical</option>
+  </select>
+
+  <button onclick="convertPermissions()">Convert</button>
+
+  <div id="result"></div>
+
+  <script>
+    const SIZE = 4;
+
+    function normalPerm(perm) {
+      let result = "";
+
+      if (perm >= 4) {
+        result += "r";
+        perm -= 4;
+      } else {
+        result += "-";
+      }
+
+      if (perm >= 2) {
+        result += "w";
+        perm -= 2;
+      } else {
+        result += "-";
+      }
+
+      if (perm === 1) {
+        result += "x";
+      } else {
+        result += "-";
+      }
+
+      return result;
+    }
+
+    function specialPerms(result, special) {
+      if (special >= 4) {
+        result = result.substr(0, 2) + (result[2] === 'x' ? 's' : 'S') + result.substr(3);
+        special -= 4;
+      }
+
+      if (special >= 2) {
+        result = result.substr(0, 5) + (result[5] === 'x' ? 's' : 'S') + result.substr(6);
+        special -= 2;
+      }
+
+      if (special === 1) {
+        result = result.substr(0, 8) + (result[8] === 'x' ? 't' : 'T') + result.substr(9);
+      }
+
+      return result;
+    }
+
+    function numericalPerms() {
+      let input = prompt("Enter permissions: ");
+      input = parseInt(input);
+
+      const perms = new Array(SIZE).fill(0);
+      const sizeInput = input.toString().length;
+
+      switch (sizeInput) {
+        case 4:
+          break;
+        case 3:
+          perms[3] = 0;
+          break;
+        case 2:
+          perms[3] = perms[2] = 0;
+          break;
+        case 1:
+          perms[3] = perms[2] = perms[1] = 0;
+          break;
+      }
+
+      for (let i = 0; i < sizeInput; i++) {
+        perms[i] = input % 10;
+        input = Math.floor(input / 10);
+      }
+
+      const tempResult = normalPerm(perms[2]) + normalPerm(perms[1]) + normalPerm(perms[0]);
+
+      return specialPerms(tempResult, perms[3]);
+    }
+
+    function calculatePerms(perms) {
+      let sum = 0;
+      if (perms[0] !== '-')
+        sum += 4;
+      if (perms[1] !== '-')
+        sum += 2;
+      if (perms[2] === 'x')
+        sum += 1;
+      else if (perms[2] === 's' || perms[2] === 't')
+        sum += 1;
+      return sum.toString();
+    }
+
+    function symbolicPerms() {
+      let input = prompt("Enter permissions: ");
+
+      let special = 0;
+      if (input[2].toLowerCase() === 's')
+        special += 4;
+      if (input[5].toLowerCase() === 's')
+        special += 2;
+      if (input[8].toLowerCase() === 't')
+        special += 1;
+
+      const result =
+        special.toString() + calculatePerms(input.substr(0, 3)) +
+        calculatePerms(input.substr(3, 3)) + calculatePerms(input.substr(6, 3));
+
+      return result;
+    }
+
+    function convertPermissions() {
+      const mode = document.getElementById('mode').value;
+
+      let result;
+
+      if (mode === 's') {
+        result = symbolicPerms();
+      } else if (mode === 'n') {
+        result = numericalPerms();
+      } else {
+        result = "Wrong mode idiot...";
+      }
+
+      document.getElementById('result').textContent = result;
+    }
+  </script>
+</body>
+</html>
